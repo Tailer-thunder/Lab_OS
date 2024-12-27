@@ -1,0 +1,17 @@
+jobs:
+  - job_id: 1
+    dependencies: []
+  - job_id: 2
+    dependencies: []
+  - job_id: 3
+    dependencies: []
+  - job_id: 4
+    dependencies: []
+  - job_id: 5
+    dependencies: [1,2]
+  - job_id: 6
+    dependencies: [3,4,5]
+  - job_id: 7
+    dependencies: []
+  - job_id: 8
+    dependencies: [6,7]
