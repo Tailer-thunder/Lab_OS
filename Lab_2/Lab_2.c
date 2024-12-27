@@ -47,7 +47,6 @@ void *find_max_area(void *arg) {
         }
     }
 
-
     data->max_area = max_area;
     data->p1 = p1;
     data->p2 = p2;
@@ -59,21 +58,27 @@ void *find_max_area(void *arg) {
 int main() {
     int num_points;
 
-    printf("������� ���������� �����: ");
-    scanf("%d", &num_points);
-
-    Point* points = (Point*)malloc(num_points * sizeof(Point));
-    if (points == NULL) {
-        fprintf(stderr, "������ ��������� ������n");
+    printf("Введите количество точек: ");
+    if (scanf("%d", &num_points) != 1 || num_points < 3) {
+        fprintf(stderr, "Ошибка: необходимо ввести целое число >= 3.\n");
         return 1;
     }
 
-    printf("������� ���������� ����� (x, y, z):n");
-    for (int i = 0; i < num_points; ++i) {
-        printf("����� %d: ", i + 1);
-        scanf("%lf %lf %lf", &points[i].x, &points[i].y, &points[i].z);
+    Point* points = (Point*)malloc(num_points * sizeof(Point));
+    if (points == NULL) {
+        fprintf(stderr, "Ошибка выделения памяти\n");
+        return 1;
     }
 
+    printf("Введите координаты точек (x, y, z):\n");
+    for (int i = 0; i < num_points; ++i) {
+        printf("Точка %d: ", i + 1);
+        if (scanf("%lf %lf %lf", &points[i].x, &points[i].y, &points[i].z) != 3) {
+            fprintf(stderr, "Ошибка ввода координат для точки %d\n", i + 1);
+            free(points);
+            return 1;
+        }
+    }
 
     int max_threads = (num_points < MAX_THREADS) ? num_points : MAX_THREADS; 
 
@@ -82,19 +87,18 @@ int main() {
 
     clock_t start = clock();
 
- 
     for (int i = 0; i < max_threads; i++) {
         thread_data[i].points = points;
         thread_data[i].num_points = num_points;
         thread_data[i].thread_id = i;
         thread_data[i].total_threads = max_threads;
+        thread_data[i].max_area = 0;
         pthread_create(&threads[i], NULL, find_max_area, &thread_data[i]);
     }
 
     double overall_max_area = 0;
     Point final_p1, final_p2, final_p3;
 
-   
     for (int i = 0; i < max_threads; i++) {
         pthread_join(threads[i], NULL);
         if (thread_data[i].max_area > overall_max_area) {
@@ -105,17 +109,16 @@ int main() {
         }
     }
 
-    
     clock_t end = clock();
     double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
 
+    printf("Максимальная площадь треугольника: %.6lf\n", overall_max_area);
+    printf("Точки треугольника:\n");
+    printf("1. (%.2lf, %.2lf, %.2lf)\n", final_p1.x, final_p1.y, final_p1.z);
+    printf("2. (%.2lf, %.2lf, %.2lf)\n", final_p2.x, final_p2.y, final_p2.z);
+    printf("3. (%.2lf, %.2lf, %.2lf)\n", final_p3.x, final_p3.y, final_p3.z);
+    printf("Время выполнения: %.6f секунд\n", time_spent);
 
-    printf("Maximum area: %lf\n", overall_max_area);
-    printf("Points: (%.2lf, %.2lf, %.2lf), (%.2lf, %.2lf, %.2lf), (%.2lf, %.2lf, %.2lf)\n",
-           final_p1.x, final_p1.y, final_p1.z,
-           final_p2.x, final_p2.y, final_p2.z,
-           final_p3.x, final_p3.y, final_p3.z);
-    printf("Execution time: %f seconds\n", time_spent);
-
+    free(points); 
     return 0;
 }
